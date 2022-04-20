@@ -8,24 +8,44 @@ window = pygame.display.set_mode((640, 480))
 running = True
 
 
+clock = pygame.time.Clock()
+
+
 class Spaceship:
     def __init__(self):
         self.x = 320
         self.y = 400
+        self.img = pygame.image.load('images/spaceship.png')
 
-        self.move_speed = 4
+        self.move_speed = 1
 
         self.rect = pygame.Rect(self.x, self.y, 40, 40)
 
+        self.moving = False
+        self.direction = ''
+
     def draw(self):
         self.rect.center = self.x, self.y
-        pygame.draw.rect(window, (0,255,0), self.rect)
+        # pygame.draw.rect(window, (0,255,0), self.rect)
+        window.blit(self.img, self.rect)
 
-    def move(self, event):
-        if event.key == pygame.K_LEFT and self.rect.left > 0:
-            self.x -= self.move_speed
-        if event.key == pygame.K_RIGHT and self.rect.right < 640:
-            self.x += self.move_speed
+    def start_move(self, key):
+        if key == pygame.K_LEFT:
+            self.direction = 'left'
+            self.moving = True
+        elif key == pygame.K_RIGHT:
+            self.direction = 'right'
+            self.moving = True
+
+    def stop_move(self):
+        self.moving = False
+
+    def move(self):
+        if self.moving:
+            if self.direction == 'left' and self.rect.left > 0:
+                self.x -= self.move_speed
+            if self.direction == 'right' and self.rect.right < 640:
+                self.x += self.move_speed
 
 
 class Invader:
@@ -39,15 +59,18 @@ class Invader:
         self.rect.center = self.x, self.y
         pygame.draw.rect(window, (0,255,0), self.rect)
 
+    def check_collision(self, proj_rect):
+        return self.rect.colliderect(proj_rect)
+
 
 class Projectile:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.rect = pygame.Rect(self.x, self.y, 10, 40)
+        self.rect = pygame.Rect(self.x, self.y, 10, 30)
 
     def draw(self):
-        pygame.draw.rect(window, (0,255, 0), self.rect)
+        pygame.draw.rect(window, (255,255, 255), self.rect)
 
 
 def spawn_invaders(row, col):
@@ -70,27 +93,41 @@ def spawn_invaders(row, col):
 
 
 spaceship = Spaceship()
-invaders = spawn_invaders(3, 20)
-projectile = None
+invaders = spawn_invaders(3, 10)
+projectiles = []
+time = 0
 
 while running:
-    pygame.key.set_repeat(15)
+    clock.tick(250)
+    time += clock.get_time()
+    print(time//1000)
+
     window.fill((0,0,0))
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
         if event.type == pygame.KEYDOWN:
-            spaceship.move(event)
+            spaceship.start_move(event.key)
             if event.key == pygame.K_SPACE:
-                projectile = Projectile(spaceship.x, spaceship.rect.top)
-
+                projectiles.append(Projectile(spaceship.rect.center[0], spaceship.rect.top))
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                spaceship.stop_move()
 
     for invader in invaders:
         invader.draw()
 
-    if projectile is not None:
-        projectile.draw()
-        projectile.rect.y -= 2
+    if len(projectiles) >= 1:
+        for projectile in projectiles:
+            projectile.draw()
+            projectile.rect.y -= 2
+            if len(invaders) >= 1:
+                for invader in invaders:
+                    if invader.check_collision(projectile.rect):
+                        invaders.remove(invader)
+                        projectiles.remove(projectile)
 
+    spaceship.move()
     spaceship.draw()
     pygame.display.flip()
