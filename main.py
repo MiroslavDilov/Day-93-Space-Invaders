@@ -1,4 +1,5 @@
 import pygame
+from random import randint
 
 pygame.init()
 
@@ -53,11 +54,14 @@ class Invader:
         self.x = x
         self.y = y
 
+        self.img = pygame.image.load('images/invader.png')
+
         self.rect = pygame.Rect(self.x, self.y, 20, 20)
 
     def draw(self):
         self.rect.center = self.x, self.y
-        pygame.draw.rect(window, (0,255,0), self.rect)
+        # pygame.draw.rect(window, (0,255,0), self.rect)
+        window.blit(self.img, self.rect)
 
     def check_collision(self, proj_rect):
         return self.rect.colliderect(proj_rect)
@@ -71,6 +75,29 @@ class Projectile:
 
     def draw(self):
         pygame.draw.rect(window, (255,255, 255), self.rect)
+
+
+class Particle:
+    def __init__(self, x, y):
+        # Postition
+        self.x = x
+        self.y = y
+
+        # Velocity
+        self.x_velocity = randint(0, 20) / 10 - 1
+        self.y_velocity = -2
+
+        self.timer = 5
+        self.time_delete = 0.1
+
+        self.radius = randint(1,3)
+
+    def draw(self):
+        self.x += self.x_velocity
+        self.y += self.y_velocity
+
+        self.timer -= self.time_delete
+        pygame.draw.circle(window, (255,255,255), (self.x, self.y), self.radius)
 
 
 def spawn_invaders(row, col):
@@ -92,15 +119,25 @@ def spawn_invaders(row, col):
     return invader_array
 
 
+def spawn_particles(x, y):
+    array = []
+
+    for i in range(10):
+        array.append(Particle(x, y))
+
+    return array
+
+
 spaceship = Spaceship()
 invaders = spawn_invaders(3, 10)
 projectiles = []
+particles = []
 time = 0
 
 while running:
     clock.tick(250)
     time += clock.get_time()
-    print(time//1000)
+    # print(time//100)
 
     window.fill((0,0,0))
 
@@ -127,6 +164,15 @@ while running:
                     if invader.check_collision(projectile.rect):
                         invaders.remove(invader)
                         projectiles.remove(projectile)
+                        particles.append(spawn_particles(projectile.rect.midtop[0], projectile.rect.midtop[1]))
+
+    if len(particles) >= 1:
+        for particles_place in particles:
+            for particle in particles_place:
+                particle.draw()
+                if particle.timer < 0:
+                    particles_place.remove(particle)
+
 
     spaceship.move()
     spaceship.draw()
