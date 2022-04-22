@@ -85,9 +85,32 @@ class Particle:
 
         # Velocity
         self.x_velocity = randint(0, 20) / 10 - 1
-        self.y_velocity = -2
+        self.y_velocity = randint(-4,-1) / 2
 
-        self.timer = 5
+        self.timer = 10
+        self.time_delete = 0.1
+
+        self.radius = randint(3,4)
+
+    def draw(self):
+        self.x += self.x_velocity
+        self.y += self.y_velocity
+
+        self.timer -= self.time_delete
+        pygame.draw.circle(window, (255,255,255), (self.x, self.y), self.radius)
+
+
+class SpaceshipParticle:
+    def __init__(self, x, y):
+        # Postition
+        self.x = x
+        self.y = y
+
+        # Velocity
+        self.x_velocity = randint(0, 20) / 10 - 1
+        self.y_velocity = randint(1,2) / 2
+
+        self.timer = 7
         self.time_delete = 0.1
 
         self.radius = randint(1,3)
@@ -97,7 +120,7 @@ class Particle:
         self.y += self.y_velocity
 
         self.timer -= self.time_delete
-        pygame.draw.circle(window, (255,255,255), (self.x, self.y), self.radius)
+        pygame.draw.circle(window, (252, 177, 3), (self.x, self.y), self.radius)
 
 
 def spawn_invaders(row, col):
@@ -122,7 +145,7 @@ def spawn_invaders(row, col):
 def spawn_particles(x, y):
     array = []
 
-    for i in range(10):
+    for i in range(5):
         array.append(Particle(x, y))
 
     return array
@@ -132,6 +155,7 @@ spaceship = Spaceship()
 invaders = spawn_invaders(3, 10)
 projectiles = []
 particles = []
+spaceship_particles = []
 time = 0
 
 while running:
@@ -173,6 +197,11 @@ while running:
                 if particle.timer < 0:
                     particles_place.remove(particle)
 
+    spaceship_particles.append(SpaceshipParticle(spaceship.rect.midbottom[0], spaceship.rect.midbottom[1]))
+    for particle in spaceship_particles:
+        particle.draw()
+        if particle.timer < 0:
+            spaceship_particles.remove(particle)
 
     spaceship.move()
     spaceship.draw()
